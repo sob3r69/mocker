@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "shop",
+  "name": "Shop API",
+  "description": "Example Shop API",
+  "prefix": "/shop",
+  "basePath": "/api",
+  "enabled": true,
+  "autoStart": true,
+  "cors": {
+    "enabled": true,
+    "origins": [
+      "*"
+    ],
+    "methods": [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "HEAD",
+      "OPTIONS"
+    ],
+    "allowedHeaders": [
+      "Content-Type",
+      "Authorization"
+    ],
+    "exposedHeaders": [],
+    "credentials": false,
+    "maxAge": 600
+  },
+  "notFound": {
+    "status": 404,
+    "contentType": "application/json",
+    "headers": {},
+    "body": {
+      "error": "Endpoint not found"
+    },
+    "delay": {
+      "type": "fixed",
+      "value": 0
+    },
+    "bodyMode": "static"
+  },
+  "endpoints": [
+    {
+      "id": "products-list",
+      "name": "List products",
+      "enabled": true,
+      "method": "GET",
+      "path": "/products",
+      "responses": [
+        {
+          "id": "products-success",
+          "name": "Success",
+          "enabled": true,
+          "default": true,
+          "priority": 0,
+          "conditions": [],
+          "response": {
+            "status": 200,
+            "contentType": "application/json",
+            "headers": {},
+            "body": [
+              {
+                "id": 1,
+                "name": "Example item"
+              }
+            ],
+            "delay": {
+              "type": "fixed",
+              "value": 0
+            },
+            "bodyMode": "static"
+          }
+        },
+        {
+          "id": "products-error",
+          "name": "Server error",
+          "enabled": true,
+          "default": false,
+          "priority": 10,
+          "conditions": [
+            {
+              "id": "products-error-query",
+              "source": "query",
+              "key": "mode",
+              "operator": "equals",
+              "value": "error"
+            }
+          ],
+          "response": {
+            "status": 500,
+            "contentType": "application/json",
+            "headers": {},
+            "body": {
+              "error": "Requested failure"
+            },
+            "delay": {
+              "type": "fixed",
+              "value": 0
+            },
+            "bodyMode": "static"
+          }
+        }
+      ]
+    }
+  ]
+}

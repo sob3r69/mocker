@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "crm",
+  "name": "CRM API",
+  "description": "Example CRM API",
+  "prefix": "/crm",
+  "basePath": "/api",
+  "enabled": true,
+  "autoStart": true,
+  "cors": {
+    "enabled": true,
+    "origins": [
+      "*"
+    ],
+    "methods": [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "HEAD",
+      "OPTIONS"
+    ],
+    "allowedHeaders": [
+      "Content-Type",
+      "Authorization"
+    ],
+    "exposedHeaders": [],
+    "credentials": false,
+    "maxAge": 600
+  },
+  "notFound": {
+    "status": 404,
+    "contentType": "application/json",
+    "headers": {},
+    "body": {
+      "error": "Endpoint not found"
+    },
+    "delay": {
+      "type": "fixed",
+      "value": 0
+    },
+    "bodyMode": "static"
+  },
+  "endpoints": [
+    {
+      "id": "users-list",
+      "name": "List users",
+      "enabled": true,
+      "method": "GET",
+      "path": "/users",
+      "responses": [
+        {
+          "id": "users-success",
+          "name": "Success",
+          "enabled": true,
+          "default": true,
+          "priority": 0,
+          "conditions": [],
+          "response": {
+            "status": 200,
+            "contentType": "application/json",
+            "headers": {},
+            "body": [
+              {
+                "id": 1,
+                "name": "Example item"
+              }
+            ],
+            "delay": {
+              "type": "fixed",
+              "value": 0
+            },
+            "bodyMode": "static"
+          }
+        },
+        {
+          "id": "users-error",
+          "name": "Server error",
+          "enabled": true,
+          "default": false,
+          "priority": 10,
+          "conditions": [
+            {
+              "id": "users-error-query",
+              "source": "query",
+              "key": "mode",
+              "operator": "equals",
+              "value": "error"
+            }
+          ],
+          "response": {
+            "status": 500,
+            "contentType": "application/json",
+            "headers": {},
+            "body": {
+              "error": "Requested failure"
+            },
+            "delay": {
+              "type": "fixed",
+              "value": 0
+            },
+            "bodyMode": "static"
+          }
+        }
+      ]
+    }
+  ]
+}
