@@ -1,11 +1,16 @@
 import { createAdminServer } from './admin/index.js';
 import { readConfig } from './config/index.js';
 import { createMockServer } from './mock/index.js';
+import { ProjectStore } from './projects/store.js';
 
 async function main() {
   const config = readConfig();
-  const admin = await createAdminServer(config);
-  const mock = createMockServer(config);
+  const store = new ProjectStore(config.projectsDir, config.maxBodySize);
+  await store.initialize();
+  const admin = await createAdminServer(config, store);
+  for (const diagnostic of store.diagnostics)
+    admin.log.warn(diagnostic, 'Project was not loaded');
+  const mock = createMockServer(config, store);
   let closing = false;
   async function shutdown() {
     if (closing)

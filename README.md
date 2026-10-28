@@ -1,6 +1,6 @@
 # Mock HTTP Server
 
-Локальный инструмент для mock HTTP API. Текущий результат — **этап A: каркас и контракты**. CRUD, mock engine, файловый watcher и редакторы ещё не реализованы. Полный план и принятые решения: [архитектура](docs/architecture.md).
+Локальный инструмент для mock HTTP API. Текущий результат — **этап B: работающий backend core**. Реализованы файловое хранилище, CRUD, запуск проектов и mock engine. Watcher и визуальные редакторы запланированы далее. Полный план и принятые решения: [архитектура](docs/architecture.md).
 
 ## Запуск
 
@@ -12,7 +12,7 @@ cp .env.example .env
 npm run dev
 ```
 
-Frontend: http://127.0.0.1:5173. Vite проксирует `/api` на административный backend. Admin по умолчанию: http://127.0.0.1:3001, mock listener: http://127.0.0.1:4000. Mock listener пока возвращает диагностический 404.
+Frontend: http://127.0.0.1:5173. Vite проксирует `/api` на административный backend. Admin по умолчанию: http://127.0.0.1:3001, mock listener: http://127.0.0.1:4000. Mock listener обслуживает endpoints запущенных проектов. [Первый запрос через curl и контракты API](docs/backend-api.md).
 
 ```sh
 npm run build
@@ -30,6 +30,8 @@ npm run lint
 npm run build
 ```
 
+`npm run test:smoke` выполняет сборку и проверку через реальные локальные TCP-порты: создание, запуск, ответы, обновление, остановку, перезапуск и SIGTERM. Проверка использует временный каталог и освобождает ресурсы после завершения.
+
 Используется пользовательский `eslint.config.js` на базе Antfu, включая форматирование. Prettier отсутствует.
 
 ## Конфигурация
@@ -38,10 +40,10 @@ npm run build
 
 Один проект — один JSON-файл с schemaVersion 1 и безопасным id. TypeScript-типы выводятся из Zod. Экспорт `projectJsonSchema` предназначен для Monaco. Проверки уникальности и межполевые ограничения дополнительно исполняются backend через Zod: JSON Schema не выражает все эти проверки.
 
-Примеры: [Shop API](examples/shop.json), [CRM API](examples/crm.json). Они не копируются в пользовательские данные автоматически. После реализации storage их можно будет импортировать. `GET /shop/api/products?mode=error` выбирает условный HTTP 500, запрос без условия — default HTTP 200.
+Примеры: [Shop API](examples/shop.json), [CRM API](examples/crm.json). Они не копируются в пользовательские данные автоматически. Их можно передать в POST /api/projects, как показано в руководстве API. `GET /shop/api/products?mode=error` выбирает условный HTTP 500, запрос без условия — default HTTP 200.
 
 Ответ поддерживает status, contentType, headers, JSON body, fixed/random delay. Текстовые ответы требуют строку или null. Для генерации используются bodyMode `generated` и generation со схемой object/array/value; seed необязателен. В конфигурации не допускается JavaScript. Генератор будет реализован на этапе E.
 
-Ручная остановка проекта не меняет autoStart. Работа с файлами, импорт/экспорт, watcher и ревизии запланированы на этап C; Docker — на этап G. История будет храниться только в памяти. MVP не включает авторизацию, БД, stateful сценарии, HTTP-клиент, proxy или mock WebSocket/SSE.
+Ручная остановка проекта не меняет autoStart. JSON сохраняется атомарно, сохранения защищены ревизиями. Импорт/экспорт и watcher запланированы на этап C; Docker — на этап G. История будет храниться только в памяти. MVP не включает авторизацию, БД, stateful сценарии, HTTP-клиент, proxy или mock WebSocket/SSE.
 
 Транзитивные DOMPurify и KaTeX закреплены через npm overrides на исправленных версиях. Это не изменяет правила пользовательского ESLint-конфига.

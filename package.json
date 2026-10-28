@@ -16,7 +16,8 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "vitest run",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "test:smoke": "npm run build && node scripts/backend-smoke.mjs"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^10.0.0",

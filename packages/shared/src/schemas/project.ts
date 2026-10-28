@@ -17,7 +17,10 @@ export function fullPath(prefix: string, basePath: string, endpointPath: string)
 const pathSchema = z.string().max(2048).refine(value => !/[?#\\\s]/u.test(value) && ![...value].some(char => char.charCodeAt(0) < 32) && !value.split('/').some(segment => segment === '..' || segment === '.'), 'Invalid URL path').transform(normalizePath);
 const mountPathSchema = pathSchema.refine(value => value !== '/' && /^\/[\w/-]+$/.test(value), 'Use a non-root static URL prefix');
 const headerNameSchema = z.string().regex(/^[!#$%&'*+.^`|~\w-]+$/, 'Invalid header name');
-const headerValueSchema = z.string().refine(value => !/[\r\n\0]/u.test(value), 'Invalid header value');
+const headerValueSchema = z.string().refine(value => [...value].every((char) => {
+  const code = char.charCodeAt(0);
+  return code === 9 || (code >= 32 && code <= 255 && code !== 127);
+}), 'Invalid header value');
 const headersSchema = z.record(headerNameSchema, headerValueSchema).refine(headers => !Object.keys(headers).some(name => ['content-length', 'transfer-encoding', 'connection'].includes(name.toLowerCase())), 'Transport headers are managed by the server');
 const msSchema = z.number().int().min(0).max(MAX_DELAY_MS);
 export const delaySchema = z.discriminatedUnion('type', [
@@ -209,9 +212,18 @@ export const endpointSchema = z.strictObject({
     });
   }
 });
+function isHttpOrigin(value: string) {
+  try {
+    const url = new URL(value);
+    return ['http:', 'https:'].includes(url.protocol) && url.origin === value;
+  }
+  catch {
+    return false;
+  }
+}
 export const corsSchema = z.strictObject({
   enabled:        z.boolean(),
-  origins:        z.array(z.string().refine(value => value === '*' || z.url().safeParse(value).success, 'Expected origin URL or *')).max(100),
+  origins:        z.array(z.string().refine(value => value === '*' || isHttpOrigin(value), 'Expected origin URL or *')).max(100),
   methods:        z.array(httpMethodSchema),
   allowedHeaders: z.array(headerNameSchema),
   exposedHeaders: z.array(headerNameSchema).default([]),
@@ -225,7 +237,7 @@ export const projectSchema = z.strictObject({
   name:          z.string().min(1).max(200),
   description:   z.string().max(10_000).optional(),
   prefix:        mountPathSchema,
-  basePath:      pathSchema.default('/'),
+  basePath:      pathSchema.refine(value => /^\/[\w/-]*$/.test(value), 'Use a static basePath').default('/'),
   enabled:       z.boolean(),
   autoStart:     z.boolean(),
   cors:          corsSchema,

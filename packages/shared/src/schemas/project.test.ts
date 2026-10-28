@@ -97,3 +97,30 @@ describe('project contract', () => {
     expect(projectSchema.safeParse(project).success).toBe(false);
   });
 });
+
+describe('hTTP-specific validation', () => {
+  it('requires a static basePath and actual HTTP origins', () => {
+    const project = projectSchema.parse(example());
+    project.basePath = '/:id';
+    expect(projectSchema.safeParse(project).success).toBe(false);
+    project.basePath = '/api';
+    for (const origin of ['https://example.com/path', 'ftp://example.com', 'https://user:pass@example.com']) {
+      project.cors.origins = [origin];
+      expect(projectSchema.safeParse(project).success).toBe(false);
+    }
+  });
+  it('rejects header injection, invalid byte values and transport overrides', () => {
+    const project = projectSchema.parse(example());
+    for (const value of [
+      'hello\r\nInjected: true',
+      '\u0001',
+      '\u007F',
+      'Привет',
+    ]) {
+      project.notFound.headers = { 'X-Test': value };
+      expect(projectSchema.safeParse(project).success).toBe(false);
+    }
+    project.notFound.headers = { 'Content-Length': '999' };
+    expect(projectSchema.safeParse(project).success).toBe(false);
+  });
+});

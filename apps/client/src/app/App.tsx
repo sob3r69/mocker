@@ -18,14 +18,14 @@ export function App() {
           <Group>
             <IconServer />
             <Title order={1} size="h2">Mock HTTP Server</Title>
-            <Badge variant="light">Этап A</Badge>
+            <Badge variant="light">Этап B</Badge>
           </Group>
           <Button variant="default" leftSection={<IconMoonStars size={16} />} onClick={toggleColorScheme}>Тема</Button>
         </Group>
         <Paper withBorder p="lg" radius="md">
           <Stack gap="sm">
-            <Title order={2} size="h3">Каркас приложения</Title>
-            <Text c="dimmed">Общие схемы и два независимых HTTP listener. Управление проектами появится после реализации backend core.</Text>
+            <Title order={2} size="h3">Backend core</Title>
+            <Text c="dimmed">Управление проектами доступно через административный API. Визуальный редактор запланирован на этап D.</Text>
             {status.isPending && <Text>Подключение к административному серверу…</Text>}
             {status.isError && <Alert color="red">Административный сервер недоступен. Проверьте запуск backend.</Alert>}
             {status.data && (
