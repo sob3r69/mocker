@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -117,12 +117,51 @@ async function main() {
     });
     assert.equal(saved.status, 200);
     assert.deepEqual(await (await request(mockUrl, '/shop/api/products')).json(), { updated: true });
+    const beforeExternal = await (await request(adminUrl, '/api/project-changes')).json();
+    snapshot.config.endpoints[0].responses[0].response.body = { external: true };
+    await writeFile(join(directory, 'shop.json'), JSON.stringify(snapshot.config));
+    async function eventually(check) {
+      for (let attempt = 0; attempt < 50; attempt++) {
+        if (await check())
+          return;
+        await pause(50);
+      }
+      throw new Error('Filesystem update did not reach HTTP API');
+    }
+    await eventually(async () => (await (await request(mockUrl, '/shop/api/products')).json()).external === true);
+    assert((await (await request(adminUrl, '/api/project-changes')).json()).version > beforeExternal.version);
+    await writeFile(join(directory, 'shop.json'), '{invalid');
+    await eventually(async () => (await (await request(adminUrl, '/api/projects/shop')).json()).state === 'error');
+    assert.deepEqual(await (await request(mockUrl, '/shop/api/products')).json(), { external: true });
+    const disk = await (await request(adminUrl, '/api/projects/shop/disk')).json();
+    snapshot.config.endpoints[0].responses[0].response.body = { updated: true };
+    const recovered = await request(adminUrl, '/api/projects/shop/config?overwrite=true', {
+      method:  'PUT',
+      headers: { 'content-type': 'application/json', 'if-match': disk.revision },
+      body:    JSON.stringify(snapshot.config),
+    });
+    assert.equal(recovered.status, 200);
+    const exported = await request(adminUrl, '/api/projects/shop/export');
+    assert.equal(exported.status, 200);
+    const importedConfig = {
+      ...await exported.json(),
+      id:     'crm',
+      prefix: '/crm',
+    };
+    const imported = await request(adminUrl, '/api/projects/import', {
+      method:  'POST',
+      headers: { 'content-type': 'application/json' },
+      body:    JSON.stringify(importedConfig),
+    });
+    assert.equal(imported.status, 201);
+    assert.equal((await request(adminUrl, '/api/projects/crm/start', { method: 'POST' })).status, 200);
+    assert.deepEqual(await (await request(mockUrl, '/crm/api/products')).json(), { updated: true });
     assert.equal((await request(adminUrl, '/api/projects/shop/stop', { method: 'POST' })).status, 200);
     assert.equal((await request(mockUrl, '/shop/api/products')).status, 404);
     await stop();
     await boot();
     assert.deepEqual(await (await request(mockUrl, '/shop/api/products')).json(), { updated: true });
-    console.log('HTTP smoke passed: create, disk persistence, start, JSON, conditional 500, listener isolation, frontend, live update, stop, restart and autoStart');
+    console.log('HTTP smoke passed: create, disk persistence, start, JSON, conditional 500, listener isolation, frontend, live update, stop, restart, autoStart, file watcher, invalid-file recovery, import/export and change notifications');
     await stop();
     console.log('Graceful SIGTERM shutdown passed');
   }

@@ -11,10 +11,11 @@ export type CorsConfig = z.infer<typeof corsSchema>;
 export type HttpMethod = z.infer<typeof httpMethodSchema>;
 export type ProjectState = 'stopped' | 'running' | 'error';
 export interface ProjectSnapshot {
-  config:   MockProject;
-  revision: string;
-  state:    ProjectState;
-  error?:   string;
+  diskRevision?: string;
+  config:        MockProject;
+  revision:      string;
+  state:         ProjectState;
+  error?:        string;
 }
 export interface ApiError {
   error: { code: string; message: string; issues?: { path: string; message: string }[] };
@@ -39,4 +40,20 @@ export interface RequestLog {
   responseBody?:      unknown;
   durationMs:         number;
   appliedDelayMs:     number;
+}
+
+export interface ProjectDiagnostic {
+  file:    string;
+  message: string;
+  issues?: { path: string; message: string }[];
+}
+export interface ProjectChanges {
+  instanceId: string;
+  version:    number;
+}
+export interface ProjectDiskDocument {
+  text:     string;
+  revision: string;
+  config?:  MockProject;
+  issues:   { path: string; message: string }[];
 }

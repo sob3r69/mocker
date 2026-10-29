@@ -2,6 +2,7 @@ import { createAdminServer } from './admin/index.js';
 import { readConfig } from './config/index.js';
 import { createMockServer } from './mock/index.js';
 import { ProjectStore } from './projects/store.js';
+import { startProjectWatcher } from './watcher/index.js';
 
 async function main() {
   const config = readConfig();
@@ -11,12 +12,18 @@ async function main() {
   for (const diagnostic of store.diagnostics)
     admin.log.warn(diagnostic, 'Project was not loaded');
   const mock = createMockServer(config, store);
+  let watcher: Awaited<ReturnType<typeof startProjectWatcher>> | undefined;
   let closing = false;
   async function shutdown() {
     if (closing)
       return;
     closing = true;
     const results = await Promise.allSettled([
+      ...(watcher
+        ? [
+            watcher.close(),
+          ]
+        : []),
       admin.close(),
       mock.close(),
     ]);
@@ -30,6 +37,7 @@ async function main() {
     void shutdown();
   });
   try {
+    watcher = await startProjectWatcher(config.projectsDir, store);
     await admin.listen(config.admin);
     await mock.listen(config.mock);
   }

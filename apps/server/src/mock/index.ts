@@ -25,7 +25,7 @@ export function createMockServer(config: AppConfig, store?: ProjectStore) {
     const project = findProject(store?.runtimeProjects() ?? [], path);
     if (!project)
       return notFound(reply, 'PROJECT_NOT_FOUND', 'No mock project matches this URL');
-    if (project.state !== 'running')
+    if (project.state !== 'running' && !(project.state === 'error' && project.resumeState === 'running'))
       return notFound(reply, 'PROJECT_STOPPED', 'Mock project is stopped');
     const allowedOrigin = applyCors(project.config.cors, request, reply);
     const match = project.routes.match(request.method.toUpperCase(), path);

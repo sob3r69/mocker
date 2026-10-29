@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { ProjectStore } from '../projects/store.js';
 import { createProjectSchema, idSchema, patchProjectSchema } from '@mocker/shared';
 import { z } from 'zod';
+import { AppError } from '../utils/errors.js';
 
 const projectParams = z.strictObject({ id: idSchema });
 const endpointParams = z.strictObject({ id: idSchema, endpointId: idSchema });
@@ -12,6 +13,19 @@ function revision(request: FastifyRequest) {
     : undefined;
 }
 export function registerProjectRoutes(app: FastifyInstance, store: ProjectStore) {
+  app.get('/api/project-changes', async () => store.changes());
+  app.post('/api/projects/import', async (request, reply) => {
+    const snapshot = await store.import(request.body);
+    return reply.code(201).header('etag', `\"${snapshot.revision}\"`).send(snapshot);
+  });
+  app.get('/api/projects/:id/export', async (request, reply) => {
+    const id = projectParams.parse(request.params).id;
+    const document = await store.disk(id);
+    if (!document.config)
+      throw new AppError(409, 'CONFIG_INVALID', 'Fix the project file before exporting');
+    return reply.type('application/json').header('content-disposition', `attachment; filename="${id}.json"`).header('etag', `"${document.revision}"`).send(document.text);
+  });
+  app.get('/api/projects/:id/disk', async request => store.disk(projectParams.parse(request.params).id));
   app.get('/api/projects', async () => store.list());
   app.get('/api/project-diagnostics', async () => store.diagnostics);
   app.post('/api/projects', async (request, reply) => {
@@ -36,7 +50,9 @@ export function registerProjectRoutes(app: FastifyInstance, store: ProjectStore)
     return reply.header('etag', `"${snapshot.revision}"`).send(snapshot.config);
   });
   app.put('/api/projects/:id/config', async (request, reply) => {
-    const snapshot = await store.replace(projectParams.parse(request.params).id, request.body, revision(request));
+    const snapshot = await store.replace(projectParams.parse(request.params).id, request.body, revision(request), z.strictObject({
+      overwrite: z.enum(['true', 'false']).optional(),
+    }).parse(request.query).overwrite === 'true');
     return reply.header('etag', `"${snapshot.revision}"`).send(snapshot);
   });
   for (const [action, state] of [
