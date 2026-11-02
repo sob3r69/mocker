@@ -134,8 +134,12 @@ export class ProjectStore {
     }
     catch (error) {
       // A file can disappear between readdir and open during an atomic save.
-      if (isFsError(error, 'ENOENT'))
+      if (isFsError(error, 'ENOENT')) {
+        if (parsedId.success && this.entries.delete(parsedId.data))
+          this.version++;
+        this.clearProblem(name);
         return;
+      }
       const diagnostic: ProjectDiagnostic = {
         file:    name,
         message: error instanceof z.ZodError

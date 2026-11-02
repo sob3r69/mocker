@@ -13,13 +13,18 @@ export async function startProjectWatcher(directory: string, store: ProjectStore
   let closing = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let pending: Promise<unknown> = Promise.resolve();
+  const reconcile = () => {
+    if (!closing)
+      pending = store.refresh().catch(() => store.reportWatchError());
+  };
+  // Native watchers can coalesce or lose events under load.
+  const reconciliation = setInterval(reconcile, 2000);
+  reconciliation.unref();
   watcher.on('all', () => {
     if (closing)
       return;
     clearTimeout(timer);
-    timer = setTimeout(() => {
-      pending = store.refresh().catch(() => store.reportWatchError());
-    }, 30);
+    timer = setTimeout(reconcile, 30);
   });
   watcher.on('error', () => store.reportWatchError());
   try {
@@ -30,6 +35,7 @@ export async function startProjectWatcher(directory: string, store: ProjectStore
   catch (error) {
     closing = true;
     clearTimeout(timer);
+    clearInterval(reconciliation);
     await watcher.close();
     throw error;
   }
@@ -37,6 +43,7 @@ export async function startProjectWatcher(directory: string, store: ProjectStore
     async close() {
       closing = true;
       clearTimeout(timer);
+      clearInterval(reconciliation);
       await watcher.close();
       await pending;
     },

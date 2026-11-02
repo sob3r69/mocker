@@ -4,6 +4,9 @@ import { defineConfig, loadEnv } from 'vite';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '../..', 'ADMIN_');
   return {
+    optimizeDeps: {
+      exclude: ['monaco-editor'],
+    },
     plugins: [
       react(),
     ],
