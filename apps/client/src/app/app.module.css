@@ -1,11 +1,11 @@
-.shell { min-height: 100dvh; --sidebar-width: 280px; }
-.header { height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 24px; border-bottom: 1px solid var(--mantine-color-default-border); background: var(--mantine-color-body); position: sticky; top: 0; z-index: 100; }
-.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
-.logo { background: var(--mantine-color-teal-7); color: white; padding: 7px; border-radius: 9px; display: flex; }
-.sidebar { position: fixed; top: 64px; bottom: 0; width: var(--sidebar-width); border-right: 1px solid var(--mantine-color-default-border); background: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-8)); overflow: auto; z-index: 90; }
-.resize { position: fixed; top: 64px; bottom: 0; left: calc(var(--sidebar-width) - 3px); width: 6px; cursor: col-resize; z-index: 95; touch-action: none; }
+.shell { --header-height: 44px; min-height: 100dvh; --sidebar-width: 280px; }
+.header { height: var(--header-height); display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 16px; border-bottom: 1px solid var(--mantine-color-default-border); background: var(--mantine-color-body); position: sticky; top: 0; z-index: 100; }
+.brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; }
+.logo { background: var(--mantine-color-teal-7); color: white; padding: 4px; border-radius: 6px; display: flex; }
+.sidebar { position: fixed; top: var(--header-height); bottom: 0; width: var(--sidebar-width); border-right: 1px solid var(--mantine-color-default-border); background: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-8)); overflow: auto; z-index: 90; }
+.resize { position: fixed; top: var(--header-height); bottom: 0; left: calc(var(--sidebar-width) - 3px); width: 6px; cursor: col-resize; z-index: 95; touch-action: none; }
 .resize:hover { background: var(--mantine-color-teal-5); opacity: 0.35; }
-.main { margin-left: var(--sidebar-width); padding: 28px 32px 48px; min-width: 0; }
+.main { margin-left: var(--sidebar-width); padding: 12px 20px 24px; min-width: 0; }
 .endpoint { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 6px; border-radius: 5px; }
 .endpoint:hover { background: light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-6)); }
 .selected, .activeProject { background: light-dark(var(--mantine-color-teal-0), var(--mantine-color-dark-5)); border-radius: 5px; }

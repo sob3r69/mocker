@@ -8,6 +8,8 @@ import { validationIssues } from '@mocker/shared';
 import Fastify from 'fastify';
 import { ZodError } from 'zod';
 import { AppError } from '../utils/errors.js';
+import { assertJsonBudget } from '../utils/json-budget.js';
+import { registerGeneratorRoutes } from './generator.js';
 import { registerProjectRoutes } from './projects.js';
 
 export async function createAdminServer(config: AppConfig, store?: ProjectStore) {
@@ -50,6 +52,8 @@ export async function createAdminServer(config: AppConfig, store?: ProjectStore)
       },
     });
   });
+  app.addHook('preValidation', async request => assertJsonBudget(request.body));
+  registerGeneratorRoutes(app);
   app.get('/api/health', async () => ({ status: 'ok' as const }));
   app.get('/api/server/status', async (): Promise<ServerStatus> => ({ admin: config.admin, mock: config.mock }));
   if (store)

@@ -1,6 +1,6 @@
 # Mock HTTP Server
 
-Локальный инструмент для mock HTTP API. Текущий результат — **этап D: визуальные редакторы и Monaco**. Реализованы управление проектами и endpoints, варианты ответов, правила, preview, темы, импорт/экспорт и разрешение файловых конфликтов. [Руководство по интерфейсу](docs/interface.md), [архитектура](docs/architecture.md).
+Локальный инструмент для mock HTTP API. Текущий результат — **этап E: генерация по JSON-образцу**. Реализованы управление проектами и endpoints, варианты ответов, правила, Faker-генерация, preview, Monaco, темы, импорт/экспорт и разрешение файловых конфликтов. [Руководство по интерфейсу](docs/interface.md), [генератор](docs/generator.md), [архитектура](docs/architecture.md).
 
 ## Запуск
 
@@ -42,7 +42,7 @@ npm run build
 
 Примеры: [Shop API](examples/shop.json), [CRM API](examples/crm.json). Они не копируются в пользовательские данные автоматически. Их можно передать в POST /api/projects, как показано в руководстве API. `GET /shop/api/products?mode=error` выбирает условный HTTP 500, запрос без условия — default HTTP 200.
 
-Ответ поддерживает status, contentType, headers, JSON body, fixed/random delay. Текстовые ответы требуют строку или null. Для генерации используются bodyMode `generated` и generation со схемой object/array/value; seed необязателен. В конфигурации не допускается JavaScript. Генератор будет реализован на этапе E.
+Ответ поддерживает status, contentType, headers, JSON body, fixed/random delay. Текстовые ответы требуют строку или null. Для генерации используются bodyMode `generated` и generation со схемой object/array/tuple/value; seed необязателен. Без seed данные меняются на каждом запросе, с seed результат повторяется. В конфигурации не допускается JavaScript. Готовый пример: [Generated Users API](examples/generated.json).
 
 Ручная остановка проекта не меняет autoStart. JSON сохраняется атомарно, сохранения защищены ревизиями. Внешние изменения применяются без перезапуска, при ошибке файла сохраняется последний корректный ответ. [Файлы, импорт/экспорт и разрешение конфликтов](docs/filesystem.md). Docker запланирован на этап G. История будет храниться только в памяти. MVP не включает авторизацию, БД, stateful сценарии, HTTP-клиент, proxy или mock WebSocket/SSE.
 

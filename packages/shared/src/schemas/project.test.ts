@@ -7,7 +7,7 @@ function example(name = 'shop') {
 }
 
 describe('project contract', () => {
-  it('accepts both independent examples', () => {
+  it('accepts independent static and generated examples', () => {
     expect(projectCollectionSchema.parse([
       example(),
       example('crm'),

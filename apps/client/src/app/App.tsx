@@ -68,10 +68,9 @@ export function App() {
         <Group gap="sm">
           <Burger hiddenFrom="sm" size="sm" opened={mobileOpen} onClick={() => setMobileOpen(value => !value)} aria-label="Проекты" />
           <Link className={styles.brand} to="/">
-            <span className={styles.logo}><IconCode size={22} /></span>
+            <span className={styles.logo}><IconCode size={18} /></span>
             <div>
               <Text fw={700} size="sm" lh={1.2}>Mock HTTP Server</Text>
-              <Text size="xs" c="dimmed">Local API workspace</Text>
             </div>
           </Link>
         </Group>
@@ -81,7 +80,7 @@ export function App() {
               ? `Mock :${status.data.mock.port}`
               : 'Connecting'}
           </Badge>
-          <ActionIcon variant="default" size="lg" aria-label="Переключить тему" onClick={toggleColorScheme}><IconMoonStars size={18} /></ActionIcon>
+          <ActionIcon variant="subtle" size="sm" aria-label="Переключить тему" onClick={toggleColorScheme}><IconMoonStars size={18} /></ActionIcon>
         </Group>
       </header>
       <aside

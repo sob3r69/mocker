@@ -161,6 +161,62 @@ async function main() {
     await stop();
     await boot();
     assert.deepEqual(await (await request(mockUrl, '/shop/api/products')).json(), { updated: true });
+    const latest = await (await request(adminUrl, '/api/projects/shop')).json();
+    const sample = [
+      {
+        id:     1,
+        name:   'Example',
+        email:  'sample@example.com',
+        active: true,
+        extra:  null,
+      },
+    ];
+    const inferred = await request(adminUrl, '/api/generator/infer', {
+      method:  'POST',
+      headers: { 'content-type': 'application/json' },
+      body:    JSON.stringify({ example: sample, arrayCount: 3 }),
+    });
+    assert.equal(inferred.status, 200);
+    const { generation } = await inferred.json();
+    const beforePreview = await readFile(join(directory, 'shop.json'), 'utf8');
+    const preview = await request(adminUrl, '/api/generator/preview', {
+      method:  'POST',
+      headers: { 'content-type': 'application/json' },
+      body:    JSON.stringify({ ...generation, seed: 42 }),
+    });
+    assert.equal(preview.status, 200);
+    const expectedGenerated = (await preview.json()).body;
+    assert.equal(expectedGenerated.length, 3);
+    assert.equal(await readFile(join(directory, 'shop.json'), 'utf8'), beforePreview);
+    latest.config.endpoints[0].responses[0].response = {
+      ...latest.config.endpoints[0].responses[0].response,
+      bodyMode: 'generated',
+      body:     sample,
+      generation,
+    };
+    const generatedSave = await request(adminUrl, '/api/projects/shop/config', {
+      method:  'PUT',
+      headers: { 'content-type': 'application/json', 'if-match': latest.revision },
+      body:    JSON.stringify(latest.config),
+    });
+    assert.equal(generatedSave.status, 200);
+    const generatedSnapshot = await generatedSave.json();
+    const freshA = await (await request(mockUrl, '/shop/api/products')).json();
+    const freshB = await (await request(mockUrl, '/shop/api/products')).json();
+    assert.equal(freshA.length, 3);
+    assert.notDeepEqual(freshA, freshB);
+    generatedSnapshot.config.endpoints[0].responses[0].response.generation.seed = 42;
+    const seeded = await request(adminUrl, '/api/projects/shop/config', {
+      method:  'PUT',
+      headers: { 'content-type': 'application/json', 'if-match': generatedSnapshot.revision },
+      body:    JSON.stringify(generatedSnapshot.config),
+    });
+    assert.equal(seeded.status, 200);
+    assert.deepEqual(await (await request(mockUrl, '/shop/api/products')).json(), expectedGenerated);
+    await stop();
+    await boot();
+    assert.deepEqual(await (await request(mockUrl, '/shop/api/products')).json(), expectedGenerated);
+    console.log('Generator HTTP smoke passed: inferred schema, preview without writes, fresh data, seed equality and restart persistence');
     console.log('HTTP smoke passed: create, disk persistence, start, JSON, conditional 500, listener isolation, frontend, live update, stop, restart, autoStart, file watcher, invalid-file recovery, import/export and change notifications');
     await stop();
     console.log('Graceful SIGTERM shutdown passed');

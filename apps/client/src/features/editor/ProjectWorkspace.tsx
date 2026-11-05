@@ -11,6 +11,7 @@ import { useConfirm } from '../../components/ConfirmProvider';
 import { useProjectDraft } from '../../hooks/useProjectDraft';
 import { duplicateEndpoint, newEndpoint, pretty } from '../../utils/editor';
 import { ConflictDialog } from './ConflictDialog';
+import styles from './editor.module.css';
 import { EndpointEditor } from './EndpointEditor';
 import { ProjectActions } from './ProjectActions';
 import { ProjectOverview } from './ProjectOverview';
@@ -156,98 +157,100 @@ export function ProjectWorkspace({ remote, endpointId, status, createRequested =
   }
   catch {}
   return (
-    <Stack gap="lg">
-      <Group justify="space-between" align="start">
-        <div>
-          <Group gap="sm">
-            <Title order={1} size="h2">{endpoint ? endpoint.name : draft.config.name}</Title>
-            <Badge
-              color={remote.state === 'running'
-                ? 'teal'
-                : remote.state === 'error'
-                  ? 'red'
-                  : 'gray'}
-              variant="dot"
+    <Stack gap="sm">
+      <div className={styles.workspaceHeader}>
+        <Group justify="space-between" align="center" gap="xs">
+          <div>
+            <Group gap="sm">
+              <Title order={1} size="h4">{endpoint ? endpoint.name : draft.config.name}</Title>
+              <Badge
+                color={remote.state === 'running'
+                  ? 'teal'
+                  : remote.state === 'error'
+                    ? 'red'
+                    : 'gray'}
+                variant="dot"
+              >
+                {remote.state}
+              </Badge>
+              {draft.dirty && <Badge color="orange" variant="light">Не сохранено</Badge>}
+            </Group>
+            <Text c="dimmed" size="xs" mt={2}>
+              {draft.config.name}
+              {' '}
+              /
+              {' '}
+              {endpoint
+                ? `${endpoint.method} ${endpoint.path}`
+                : `${draft.config.endpoints.length} endpoints`}
+            </Text>
+          </div>
+          <Group gap="xs">
+            <Button
+              size="xs"
+              variant="default"
+              leftSection={<IconRefresh size={16} />}
+              disabled={!draft.dirty || busy.isPending}
+              onClick={async () => {
+                if (await confirm('Отменить все несохранённые изменения?')) {
+                  draft.load(remote);
+                  setError('');
+                }
+              }}
             >
-              {remote.state}
-            </Badge>
-            {draft.dirty && <Badge color="orange" variant="light">Не сохранено</Badge>}
+              Отменить
+            </Button>
+            <Button size="xs" leftSection={<IconCheck size={16} />} loading={busy.isPending} disabled={!draft.dirty} onClick={() => busy.mutate(() => save())} title="Сохранить · Ctrl / ⌘ S">Сохранить</Button>
           </Group>
-          <Text c="dimmed" size="sm" mt={5}>
-            {draft.config.name}
-            {' '}
-            /
-            {' '}
-            {endpoint
-              ? `${endpoint.method} ${endpoint.path}`
-              : `${draft.config.endpoints.length} endpoints`}
-          </Text>
-        </div>
-        <Group gap="xs">
-          <Button
-            variant="default"
-            leftSection={<IconRefresh size={16} />}
-            disabled={!draft.dirty || busy.isPending}
-            onClick={async () => {
-              if (await confirm('Отменить все несохранённые изменения?')) {
-                draft.load(remote);
-                setError('');
-              }
+        </Group>
+        <Group justify="space-between" gap="xs" mt={6}>
+          <Group gap="xs">
+            <Button
+              size="xs"
+              variant="light"
+              color={remote.state === 'running'
+                ? 'gray'
+                : 'teal'}
+              leftSection={<IconPlayerPlay size={14} />}
+              disabled={draft.dirty || remote.state === 'running' || !!remote.error || !remote.config.enabled || busy.isPending}
+              onClick={() => busy.mutate(async () => {
+                cache(await projectsApi.state(remote.config.id, 'start'));
+                notify('Проект запущен');
+              })}
+            >
+              Запустить
+            </Button>
+            <Button
+              size="xs"
+              variant="default"
+              leftSection={<IconPlayerStop size={14} />}
+              disabled={remote.state === 'stopped' || busy.isPending}
+              onClick={() => busy.mutate(async () => {
+                cache(await projectsApi.state(remote.config.id, 'stop'));
+                notify('Проект остановлен');
+              })}
+            >
+              Остановить
+            </Button>
+            <Button size="xs" variant="subtle" leftSection={<IconSettings size={14} />} onClick={() => navigate(`/projects/${remote.config.id}`)}>Проект</Button>
+            <Button size="xs" variant="subtle" leftSection={<IconPlus size={14} />} onClick={addEndpoint}>Endpoint</Button>
+          </Group>
+          <SegmentedControl
+            aria-label="Режим редактора"
+            size="xs"
+            value={mode}
+            data={[
+              { label: 'Визуальный', value: 'visual', disabled: !validText },
+              { label: 'JSON', value: 'json', disabled: hasBufferErrors },
+            ]}
+            onChange={(next) => {
+              if (next === 'json')
+                draft.removeBuffers('');
+              setMode(next);
             }}
-          >
-            Отменить
-          </Button>
-          <Button leftSection={<IconCheck size={16} />} loading={busy.isPending} disabled={!draft.dirty} onClick={() => busy.mutate(() => save())}>Сохранить</Button>
+          />
         </Group>
-      </Group>
-      <Group justify="space-between">
-        <Group gap="xs">
-          <Button
-            size="xs"
-            variant="light"
-            color={remote.state === 'running'
-              ? 'gray'
-              : 'teal'}
-            leftSection={<IconPlayerPlay size={14} />}
-            disabled={draft.dirty || remote.state === 'running' || !!remote.error || !remote.config.enabled || busy.isPending}
-            onClick={() => busy.mutate(async () => {
-              cache(await projectsApi.state(remote.config.id, 'start'));
-              notify('Проект запущен');
-            })}
-          >
-            Запустить
-          </Button>
-          <Button
-            size="xs"
-            variant="default"
-            leftSection={<IconPlayerStop size={14} />}
-            disabled={remote.state === 'stopped' || busy.isPending}
-            onClick={() => busy.mutate(async () => {
-              cache(await projectsApi.state(remote.config.id, 'stop'));
-              notify('Проект остановлен');
-            })}
-          >
-            Остановить
-          </Button>
-          <Button size="xs" variant="subtle" leftSection={<IconSettings size={14} />} onClick={() => navigate(`/projects/${remote.config.id}`)}>Проект</Button>
-          <Button size="xs" variant="subtle" leftSection={<IconPlus size={14} />} onClick={addEndpoint}>Endpoint</Button>
-        </Group>
-        <SegmentedControl
-          aria-label="Режим редактора"
-          size="xs"
-          value={mode}
-          data={[
-            { label: 'Визуальный', value: 'visual', disabled: !validText },
-            { label: 'JSON', value: 'json', disabled: hasBufferErrors },
-          ]}
-          onChange={(next) => {
-            if (next === 'json')
-              draft.removeBuffers('');
-            setMode(next);
-          }}
-        />
-      </Group>
-      {draft.dirty && <Text size="xs" c="dimmed">Изменения применяются после сохранения · Ctrl / ⌘ S</Text>}
+      </div>
       {error && <Alert color="red" withCloseButton onClose={() => setError('')} style={{ whiteSpace: 'pre-wrap' }}>{error}</Alert>}
       {Object.entries(draft.buffers).filter(([, value]) => value.error).map(([key, value]) => <Alert key={key} color="red">{value.error}</Alert>)}
       {remote.error && (

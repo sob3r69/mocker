@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { HTTP_METHODS, MAX_DELAY_MS, MAX_GENERATED_ITEMS, MAX_GENERATION_DEPTH } from '../constants/index.js';
+import { HTTP_METHODS, MAX_DELAY_MS, MAX_GENERATED_ITEMS, MAX_GENERATED_NODES, MAX_GENERATION_DEPTH } from '../constants/index.js';
 
 export const idSchema = z.string().regex(/^[a-z0-9][a-z0-9_-]{0,63}$/, 'Use 1–64 lowercase letters, digits, underscores or hyphens');
 export const jsonValueSchema = z.json();
@@ -63,18 +63,18 @@ export const generatorNames = [
   'url',
   'avatar',
 ] as const;
-export interface GeneratorNode {
-  type:        'value' | 'object' | 'array';
-  generator?:  typeof generatorNames[number];
-  properties?: Record<string, GeneratorNode>;
-  items?:      GeneratorNode;
-  count?:      number;
-}
+export type GeneratorName = typeof generatorNames[number];
+export type GeneratorNode
+  = | { type: 'value'; generator: GeneratorName; integer?: boolean | undefined }
+    | { type: 'object'; properties: Record<string, GeneratorNode> }
+    | { type: 'array'; items: GeneratorNode; count: number }
+    | { type: 'tuple'; items: GeneratorNode[] };
 const unsafeKeys = new Set(['__proto__', 'prototype', 'constructor']);
 export const generatorNodeSchema: z.ZodType<GeneratorNode> = z.lazy(() => z.discriminatedUnion('type', [
   z.strictObject({
     type:      z.literal('value'),
     generator: z.enum(generatorNames),
+    integer:   z.boolean().optional(),
   }),
   z.strictObject({
     type:       z.literal('object'),
@@ -85,18 +85,24 @@ export const generatorNodeSchema: z.ZodType<GeneratorNode> = z.lazy(() => z.disc
     items: generatorNodeSchema,
     count: z.number().int().min(0).max(MAX_GENERATED_ITEMS),
   }),
+  z.strictObject({
+    type:  z.literal('tuple'),
+    items: z.array(generatorNodeSchema).max(MAX_GENERATED_ITEMS),
+  }),
 ]));
 function generationCost(node: GeneratorNode, depth = 0): number {
   if (depth > MAX_GENERATION_DEPTH)
     return Infinity;
   if (node.type === 'array')
-    return 1 + (node.count ?? 0) * generationCost(node.items!, depth + 1);
+    return 1 + node.count * generationCost(node.items, depth + 1);
+  if (node.type === 'tuple')
+    return 1 + node.items.reduce((total, child) => total + generationCost(child, depth + 1), 0);
   if (node.type === 'object')
-    return 1 + Object.values(node.properties ?? {}).reduce((total, child) => total + generationCost(child, depth + 1), 0);
+    return 1 + Object.values(node.properties).reduce((total, child) => total + generationCost(child, depth + 1), 0);
   return 1;
 }
 export const generationSchema = z.strictObject({
-  schema: generatorNodeSchema.refine(node => generationCost(node) <= 10_000, 'Generation exceeds depth or total node budget'),
+  schema: generatorNodeSchema.refine(node => generationCost(node) <= MAX_GENERATED_NODES, 'Generation exceeds depth or total node budget'),
   seed:   z.number().int().optional(),
 });
 export const responseSchema = z.strictObject({

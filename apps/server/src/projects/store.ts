@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { compileRoutes } from '../mock/routing.js';
 import { ProjectFiles } from '../storage/files.js';
 import { AppError, isFsError } from '../utils/errors.js';
+import { assertJsonBudget } from '../utils/json-budget.js';
 
 export interface RuntimeProject extends ProjectSnapshot {
   routes:       CompiledRoutes;
@@ -112,7 +113,9 @@ export class ProjectStore {
         this.clearProblem(name);
         return;
       }
-      const config = projectSchema.parse(JSON.parse(file.text));
+      const input: unknown = JSON.parse(file.text);
+      assertJsonBudget(input);
+      const config = projectSchema.parse(input);
       if (config.id !== id)
         throw new AppError(400, 'ID_MISMATCH', 'File name must match project ID');
       this.validateCollection(config);
@@ -180,7 +183,9 @@ export class ProjectStore {
     const issues: ProjectDiskDocument['issues'] = [];
     let config: MockProject | undefined;
     try {
-      config = projectSchema.parse(JSON.parse(file.text));
+      const input: unknown = JSON.parse(file.text);
+      assertJsonBudget(input);
+      config = projectSchema.parse(input);
       if (config.id !== id)
         throw new AppError(400, 'ID_MISMATCH', 'File name must match project ID');
       this.validateCollection(config);

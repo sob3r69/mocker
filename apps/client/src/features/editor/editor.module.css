@@ -1,5 +1,17 @@
-.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 24px; align-items: start; }
-.preview { position: sticky; top: 88px; min-width: 0; background: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-7)); }
-.code { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-height: 1.7; font-family: var(--mantine-font-family-monospace); margin: 0; }
-.url { overflow-wrap: anywhere; font-family: var(--mantine-font-family-monospace); font-size: 12px; color: var(--mantine-color-dimmed); }
-@media (max-width: 1100px) { .split { grid-template-columns: minmax(0, 1fr); } .preview { position: static; } }
+.workspaceHeader { padding-bottom: 8px; border-bottom: 1px solid var(--mantine-color-default-border); }
+.variantBar { display: grid; grid-template-columns: minmax(160px, 1fr) repeat(3, auto) minmax(120px, 0.8fr) repeat(3, auto); gap: 8px; align-items: end; }
+.variantBar > button { margin-bottom: 4px; }
+.variantBar > :nth-last-child(3) { align-self: end; margin-bottom: 7px; }
+.responseToolbar { display: grid; grid-template-columns: 100px minmax(160px, 1fr) minmax(120px, 0.8fr) auto; gap: 8px; align-items: end; }
+.responseLayout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 12px; align-items: start; }
+.responseLayout > *, .responseToolbar > *, .variantBar > * { min-width: 0; }
+.responseOptions { padding: 10px; border: 1px solid var(--mantine-color-default-border); border-radius: var(--mantine-radius-sm); }
+.preview { min-width: 0; }
+.preview :global(.mantine-Accordion-control) { padding: 8px 12px; }
+.preview :global(.mantine-Accordion-label) { padding: 0; }
+.preview :global(.mantine-Accordion-content) { max-height: 320px; overflow: auto; }
+.code { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-height: 1.5; font-family: var(--mantine-font-family-monospace); margin: 0; }
+.url { overflow-wrap: anywhere; font-family: var(--mantine-font-family-monospace); font-size: 11px; color: var(--mantine-color-dimmed); }
+@media (max-width: 1100px) { .responseToolbar { grid-template-columns: 85px minmax(140px, 1fr) minmax(110px, 1fr); } .responseToolbar > button { grid-column: 1 / -1; justify-self: start; } .responseLayout { grid-template-columns: minmax(0, 1fr) 220px; } }
+@media (max-width: 900px) { .variantBar { grid-template-columns: minmax(120px, 1fr) repeat(3, auto); } }
+@media (max-width: 600px) { .responseLayout { grid-template-columns: minmax(0, 1fr); } .responseToolbar { grid-template-columns: 85px minmax(0, 1fr); } .responseToolbar > .bodyMode { grid-column: 1 / -1; } }

@@ -1,15 +1,18 @@
 import { useComputedColorScheme } from '@mantine/core';
 import { projectJsonSchema } from '@mocker/shared';
 import Editor, { loader } from '@monaco-editor/react';
-import * as monaco from 'monaco-editor/editor/editor.api.js';
+import * as monaco from 'monaco-editor';
 import EditorWorker from 'monaco-editor/editor/editor.worker?worker';
+import HtmlWorker from 'monaco-editor/language/html/html.worker?worker';
 import JsonWorker from 'monaco-editor/language/json/json.worker?worker';
 import { jsonDefaults } from 'monaco-editor/languages/features/json/register.js';
 
 globalThis.MonacoEnvironment = {
   getWorker: (_id, label) => label === 'json'
     ? new JsonWorker()
-    : new EditorWorker(),
+    : label === 'html' || label === 'handlebars' || label === 'razor'
+      ? new HtmlWorker()
+      : new EditorWorker(),
 };
 loader.config({ monaco });
 function configure() {

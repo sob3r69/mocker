@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "id": "generated",
+  "name": "Generated Users API",
+  "description": "Fresh Faker data on each request; set generation.seed for repeatable responses",
+  "prefix": "/generated",
+  "basePath": "/api",
+  "enabled": true,
+  "autoStart": true,
+  "cors": {
+    "enabled": true,
+    "origins": [
+      "*"
+    ],
+    "methods": [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "HEAD",
+      "OPTIONS"
+    ],
+    "allowedHeaders": [
+      "Content-Type",
+      "Authorization"
+    ],
+    "exposedHeaders": [],
+    "credentials": false,
+    "maxAge": 600
+  },
+  "notFound": {
+    "status": 404,
+    "contentType": "application/json",
+    "headers": {},
+    "body": {
+      "error": "Endpoint not found"
+    },
+    "delay": {
+      "type": "fixed",
+      "value": 0
+    },
+    "bodyMode": "static"
+  },
+  "endpoints": [
+    {
+      "id": "generated-users",
+      "name": "Generated users",
+      "enabled": true,
+      "method": "GET",
+      "path": "/users",
+      "responses": [
+        {
+          "id": "generated-success",
+          "name": "Generated success",
+          "enabled": true,
+          "default": true,
+          "priority": 0,
+          "conditions": [],
+          "response": {
+            "status": 200,
+            "contentType": "application/json",
+            "headers": {
+              "X-Generated": "true"
+            },
+            "body": [
+              {
+                "id": 1,
+                "name": "John Doe",
+                "email": "john@example.com",
+                "isActive": true,
+                "address": {
+                  "city": "London",
+                  "country": "UK"
+                },
+                "createdAt": "2024-01-01T00:00:00.000Z",
+                "tags": [
+                  "customer"
+                ],
+                "extra": null
+              }
+            ],
+            "delay": {
+              "type": "fixed",
+              "value": 0
+            },
+            "bodyMode": "generated",
+            "generation": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "value",
+                      "generator": "id",
+                      "integer": true
+                    },
+                    "name": {
+                      "type": "value",
+                      "generator": "name"
+                    },
+                    "email": {
+                      "type": "value",
+                      "generator": "email"
+                    },
+                    "isActive": {
+                      "type": "value",
+                      "generator": "boolean"
+                    },
+                    "address": {
+                      "type": "object",
+                      "properties": {
+                        "city": {
+                          "type": "value",
+                          "generator": "city"
+                        },
+                        "country": {
+                          "type": "value",
+                          "generator": "country"
+                        }
+                      }
+                    },
+                    "createdAt": {
+                      "type": "value",
+                      "generator": "createdAt"
+                    },
+                    "tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "value",
+                        "generator": "string"
+                      },
+                      "count": 3
+                    },
+                    "extra": {
+                      "type": "value",
+                      "generator": "null"
+                    }
+                  }
+                },
+                "count": 3
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
